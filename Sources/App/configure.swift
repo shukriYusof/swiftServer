@@ -1,6 +1,5 @@
 import Vapor
-import Leaf
-import FluentSQLite
+import FluentPostgreSQL
 
 /// Called before your application initializes.
 public func configure(
@@ -14,17 +13,18 @@ public func configure(
     try routes(router)
     services.register(router, as: Router.self)
 
-    let leafProvider = LeafProvider()
-    try services.register(leafProvider)
-    config.prefer(LeafRenderer.self, for: ViewRenderer.self)
+    try services.register(FluentPostgreSQLProvider())
 
-    try services.register(FluentSQLiteProvider())
-
-    var databases = DatabasesConfig()
-    try databases.add(database: SQLiteDatabase(storage: .memory), as: .sqlite)
-    services.register(databases)
+    let postgresqlConfig = PostgreSQLDatabaseConfig(
+        hostname: "127.0.0.1",
+        port: 5431,
+        username: "winappdeveloper",
+        database: "swift_server",
+        password: nil
+    )
+    services.register(postgresqlConfig)
 
     var migrations = MigrationConfig()
-    migrations.add(model: User.self, database: .sqlite)
+    migrations.add(model: User.self, database: .psql)
     services.register(migrations)
 }

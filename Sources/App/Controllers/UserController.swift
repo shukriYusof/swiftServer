@@ -1,21 +1,31 @@
 import Vapor
 
-final class UserController {
-
-    // view with users
-    func list(_ req: Request) throws -> Future<View> {
-        return User.query(on: req).all().flatMap { users in
-            let data = ["userlist": users]
-            return try req.view().render("userview", data)
+final class UserController{
+    
+    //view with users
+    func list(_ requset: Request) throws -> Future<[User]> {
+        return User.query( on: requset).all()
+    }
+    //function create a new user
+    func create(_ request: Request) throws -> Future<User> {
+        return try request.content.decode(User.self).flatMap{ user in
+            return user.save(on: request)
         }
     }
-
-    // create a new user
-    func create(_ req: Request) throws -> Future<Response> {
-        return try req.content.decode(User.self).flatMap { user in
-            return user.save(on: req).map { _ in
-                return req.redirect(to: "users")
+    //function update user
+    func update(_ request: Request) throws -> Future<User>{
+        return try request.parameters.next(User.self).flatMap{ user in
+            return try request.content.decode(User.self).flatMap{ newUser in
+                user.username = newUser.username
+                return user.save(on: request)
             }
         }
     }
+    //function delete user
+    func delete(_ request:Request) throws -> Future<HTTPStatus>{
+        return try request.parameters.next(User.self).flatMap{ user in
+            return user.delete(on: request)
+        }.transform(to: .ok)
+    }
+    
 }
